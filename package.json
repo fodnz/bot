@@ -1,0 +1,13 @@
+{
+  "dependencies": {
+    "@zapo-js/media-utils": "^1.0.0",
+    "@zapo-js/native": "^0.1.0",
+    "@zapo-js/store-sqlite": "^1.2.0",
+    "better-sqlite3": "^13.0.3",
+    "zapo-js": "^1.8.2"
+  },
+  "allowScripts": {
+    "better-sqlite3@13.0.3": true,
+    "zapo-js@1.8.2": true
+  }
+}
