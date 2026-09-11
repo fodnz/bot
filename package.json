@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "description": "Lightweight and extensible WhatsApp bot powered by Zapo-js.",
   "main": "src/bot.js",
-  "type": "commonjs",
+  "type": "module",
   "scripts": {
     "start": "node src/bot.js",
     "dev": "node --watch src/bot.js",
