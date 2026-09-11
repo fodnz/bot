@@ -6,12 +6,7 @@
   "type": "module",
   "scripts": {
     "start": "node src/bot.js",
-    "dev": "node --watch src/bot.js",
-    "lint": "eslint .",
-    "format": "prettier --write .",
-    "format:check": "prettier --check .",
-    "test": "node --test",
-    "check": "npm run lint && npm run format:check && npm test"
+    "dev": "node --watch src/bot.js"
   },
   "keywords": [
     "whatsapp",
