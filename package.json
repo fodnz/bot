@@ -1,4 +1,49 @@
 {
+  "name": "bot",
+  "version": "0.1.0",
+  "description": "Lightweight and extensible WhatsApp bot powered by Zapo-js.",
+  "main": "src/bot.js",
+  "type": "commonjs",
+  "scripts": {
+    "start": "node src/bot.js",
+    "dev": "node --watch src/bot.js",
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "test": "node --test",
+    "check": "npm run lint && npm run format:check && npm test"
+  },
+  "keywords": [
+    "whatsapp",
+    "whatsapp-bot",
+    "bot",
+    "zapo-js",
+    "zapo",
+    "automation",
+    "nodejs"
+  ],
+  "author": {
+    "name": "fodnz",
+    "url": "https://github.com/fodnz"
+  },
+  "license": "MIT",
+  "private": true,
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/fodnz/bot.git"
+  },
+  "bugs": {
+    "url": "https://github.com/fodnz/bot/issues"
+  },
+  "homepage": "https://github.com/fodnz/bot#readme",
+  "files": [
+    "src",
+    "README.md",
+    "LICENSE"
+  ],
   "dependencies": {
     "@zapo-js/media-utils": "^1.0.0",
     "@zapo-js/native": "^0.1.0",
