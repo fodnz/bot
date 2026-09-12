@@ -1,23 +1,17 @@
-import fs from 'fs';
-import pathModule from 'path';
-import { fileURLToPath } from 'url';
+import 'dotenv/config'
+import fs from 'node:fs'
+import path from 'node:path'
+import { fileURLToPath } from 'node:url'
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = pathModule.dirname(__filename);
+const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
-const dataDir = pathModule.join(__dirname, '..', 'data');
+const dataDir = path.resolve(__dirname, '..', 'data')
+const authPath = path.join(dataDir, 'state.db')
 
-if (!fs.existsSync(dataDir)) {
-  fs.mkdirSync(dataDir, { recursive: true });
-}
-
-const authPath = pathModule.join(dataDir, 'state.db');
-
-const authDirectory = pathModule.dirname(authPath);
-if (!fs.existsSync(authDirectory)) {
-  fs.mkdirSync(authDirectory, { recursive: true });
-}
+fs.mkdirSync(dataDir, { recursive: true })
 
 export const filePath = {
-  auth: authPath
-};
+  auth: authPath,
+}
+
+export const botNumber = process.env.BOT_NUMBER ?? null
