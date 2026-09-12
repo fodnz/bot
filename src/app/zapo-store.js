@@ -1,7 +1,7 @@
 import { createStore } from "zapo-js";
 import { createSqliteStore } from "@zapo-js/store-sqlite";
 
-import { filePath } from "../app.config.js";
+import { filePath } from "../config.js";
 
 const sqlite = createSqliteStore({
     path: filePath.auth,
