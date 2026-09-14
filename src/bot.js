@@ -7,9 +7,11 @@ import { initializeDatabase } from "./database/index.js";
 import { createRepository } from "./database/repository.js";
 import { registerDatabaseEvents } from "./database/events.js";
 import { createDatabaseBackend } from "./database/stores.js";
+import { upsertGroupMetadataFixed } from "./database/group-metadata.js";
 
 const database = initializeDatabase(filePath.database);
 const repository = createRepository(database);
+repository.upsertGroupMetadata = (group) => upsertGroupMetadataFixed(database, repository, group);
 const databaseBackend = createDatabaseBackend(repository);
 const store = createZapoStore(databaseBackend);
 
