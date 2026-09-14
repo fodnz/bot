@@ -6,7 +6,8 @@
   "type": "module",
   "scripts": {
     "start": "node src/bot.js",
-    "dev": "node --watch src/bot.js"
+    "dev": "node --watch src/bot.js",
+    "db:check": "node scripts/check-database.js"
   },
   "keywords": [
     "whatsapp",
@@ -36,6 +37,7 @@
   "homepage": "https://github.com/fodnz/bot#readme",
   "files": [
     "src",
+    "scripts",
     "README.md",
     "LICENSE"
   ],
