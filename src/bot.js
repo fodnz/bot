@@ -4,7 +4,7 @@ import { logger } from "./app/logger.js";
 import { createZapoStore } from "./app/zapo-store.js";
 import { botPn, sId, pairCode, filePath } from "./config.js";
 import { initializeDatabase } from "./database/index.js";
-import { createRepository } from "./database/repository.js";
+import { createRepository } from "./database/repository-safe.js";
 import { registerDatabaseEvents } from "./database/events.js";
 import { createDatabaseBackend } from "./database/stores.js";
 import { upsertGroupMetadataFixed } from "./database/group-metadata.js";
