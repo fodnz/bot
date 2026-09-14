@@ -60,7 +60,7 @@ async function shutdown(signal) {
     } catch (error) {
         console.error(`client shutdown failed after ${signal}:`, error);
     } finally {
-        if (database.open) database.close();
+        if (database.opened) database.close();
     }
 }
 
