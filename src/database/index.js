@@ -3,7 +3,9 @@ import fs from "node:fs";
 import path from "node:path";
 
 import { schema, schemaVersion } from "./schema.js";
-import { normalizeIdentifier, normalizeJid, normalizePhoneJid, normalizePhoneNumber } from "./normalization.js";
+import { identifierType, normalizeIdentifier, normalizeJid, normalizePhoneJid, normalizePhoneNumber } from "./normalization.js";
+
+const databaseMigrationVersion = 3;
 
 function mergeContact(db, sourceId, targetId) {
     if (sourceId === targetId) return;
@@ -31,7 +33,7 @@ function migrateContactIdentities(db) {
         if (!normalized || normalized === row.value) continue;
         const conflict = db.prepare("SELECT id, contact_id FROM contact_identities WHERE value = ? LIMIT 1").get(normalized);
         if (!conflict) {
-            db.prepare("UPDATE contact_identities SET value = ?, identifier_type = ?, updated_at = ? WHERE id = ?").run(normalized, normalized.endsWith("@lid") ? "lid" : normalized.includes(":") && normalized.includes("@") ? "device_jid" : normalized.endsWith("@s.whatsapp.net") ? "pn" : "jid", Date.now(), row.id);
+            db.prepare("UPDATE contact_identities SET value = ?, identifier_type = ?, updated_at = ? WHERE id = ?").run(normalized, identifierType(normalized), Date.now(), row.id);
             continue;
         }
         if (conflict.contact_id === row.contact_id) {
@@ -68,17 +70,24 @@ function migrateMessageJids(db) {
     const rows = db.prepare("SELECT id, sender_jid, sender_alt_jid, participant_jid, participant_alt_jid, recipient_jid, recipient_alt_jid FROM messages").all();
     const update = db.prepare("UPDATE messages SET sender_jid = ?, sender_alt_jid = ?, participant_jid = ?, participant_alt_jid = ?, recipient_jid = ?, recipient_alt_jid = ?, updated_at = ? WHERE id = ?");
     for (const row of rows) {
-        const values = [
-            normalizeIdentifier(row.sender_jid),
-            normalizeIdentifier(row.sender_alt_jid),
-            normalizeIdentifier(row.participant_jid),
-            normalizeIdentifier(row.participant_alt_jid),
-            normalizeIdentifier(row.recipient_jid),
-            normalizeIdentifier(row.recipient_alt_jid)
-        ];
-        if (values.some((value, index) => value !== [row.sender_jid, row.sender_alt_jid, row.participant_jid, row.participant_alt_jid, row.recipient_jid, row.recipient_alt_jid][index])) {
-            update.run(...values, Date.now(), row.id);
-        }
+        const previous = [row.sender_jid, row.sender_alt_jid, row.participant_jid, row.participant_alt_jid, row.recipient_jid, row.recipient_alt_jid];
+        const values = previous.map((value) => normalizeIdentifier(value));
+        if (values.some((value, index) => value !== previous[index])) update.run(...values, Date.now(), row.id);
+    }
+}
+
+function migrateGroupJids(db) {
+    const groups = db.prepare("SELECT id, group_jid, context_group_jid, subject_owner_jid FROM group_events").all();
+    const updateEvent = db.prepare("UPDATE group_events SET group_jid = ?, context_group_jid = ?, subject_owner_jid = ? WHERE id = ?");
+    for (const row of groups) {
+        const values = [normalizeJid(row.group_jid), normalizeJid(row.context_group_jid), normalizeIdentifier(row.subject_owner_jid)];
+        if (values[0] !== row.group_jid || values[1] !== row.context_group_jid || values[2] !== row.subject_owner_jid) updateEvent.run(...values, row.id);
+    }
+
+    const bundles = db.prepare("SELECT id, group_jid FROM group_history_bundles").all();
+    for (const row of bundles) {
+        const normalized = normalizeJid(row.group_jid);
+        if (normalized !== row.group_jid) db.prepare("UPDATE group_history_bundles SET group_jid = ? WHERE id = ?").run(normalized, row.id);
     }
 }
 
@@ -121,15 +130,17 @@ export function initializeDatabase(databasePath) {
                 }
             }
 
-            if (currentVersion < 3) {
+            if (currentVersion < databaseMigrationVersion) {
                 migrateContactIdentities(db);
                 migrateContactPhones(db);
                 migratePhoneJids(db);
                 migrateMessageJids(db);
+                migrateGroupJids(db);
             }
 
-            if (currentVersion < schemaVersion) {
-                db.prepare("INSERT INTO schema_migrations (version, applied_at) VALUES (?, ?)").run(schemaVersion, Date.now());
+            const appliedVersion = Math.max(schemaVersion, databaseMigrationVersion);
+            if (currentVersion < appliedVersion) {
+                db.prepare("INSERT INTO schema_migrations (version, applied_at) VALUES (?, ?)").run(appliedVersion, Date.now());
             }
         });
 
