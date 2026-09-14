@@ -1,8 +1,17 @@
 import { WaClient } from "zapo-js";
 
 import { logger } from "./app/logger.js";
-import { store } from "./app/zapo-store.js";
-import { botPn, sId, pairCode } from "./config.js";
+import { createZapoStore } from "./app/zapo-store.js";
+import { botPn, sId, pairCode, filePath } from "./config.js";
+import { initializeDatabase } from "./database/index.js";
+import { createRepository } from "./database/repository.js";
+import { registerDatabaseEvents } from "./database/events.js";
+import { createDatabaseBackend } from "./database/stores.js";
+
+const database = initializeDatabase(filePath.database);
+const repository = createRepository(database);
+const databaseBackend = createDatabaseBackend(repository);
+const store = createZapoStore(databaseBackend);
 
 const client = new WaClient(
     {
@@ -13,6 +22,8 @@ const client = new WaClient(
     },
     logger
 );
+
+registerDatabaseEvents(client, repository);
 
 client.on("auth_qr", async () => {
     await client.auth.requestPairingCode(botPn, true, pairCode);
@@ -34,3 +45,6 @@ client.on("connection", ({ status, reason }) => {
 });
 
 await client.connect();
+
+process.once("SIGINT", () => database.close());
+process.once("SIGTERM", () => database.close());
