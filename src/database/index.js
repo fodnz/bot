@@ -9,6 +9,19 @@ const databaseMigrationVersion = 3;
 
 function mergeContact(db, sourceId, targetId) {
     if (sourceId === targetId) return;
+
+    const source = db.prepare("SELECT display_name, push_name, username, phone_number, country_code FROM contacts WHERE id = ?").get(sourceId);
+    if (!source) return;
+
+    db.prepare("UPDATE contacts SET display_name = COALESCE(display_name, ?), push_name = COALESCE(push_name, ?), username = COALESCE(username, ?), phone_number = COALESCE(phone_number, ?), country_code = COALESCE(country_code, ?), updated_at = ? WHERE id = ?").run(source.display_name, source.push_name, source.username, source.phone_number, source.country_code, Date.now(), targetId);
+
+    const identities = db.prepare("SELECT value, identifier_type, is_primary, created_at, updated_at FROM contact_identities WHERE contact_id = ?").all(sourceId);
+    for (const identity of identities) {
+        const conflict = db.prepare("SELECT contact_id FROM contact_identities WHERE value = ? LIMIT 1").get(identity.value);
+        if (conflict && conflict.contact_id !== targetId) continue;
+        db.prepare("INSERT INTO contact_identities (contact_id, identifier_type, value, is_primary, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?) ON CONFLICT(value) DO UPDATE SET is_primary = CASE WHEN contact_identities.is_primary = 1 THEN 1 ELSE excluded.is_primary END, updated_at = excluded.updated_at").run(targetId, identity.identifier_type, identity.value, identity.is_primary, identity.created_at, identity.updated_at);
+    }
+
     const statements = [
         ["UPDATE chats SET contact_id = ? WHERE contact_id = ?", targetId, sourceId],
         ["UPDATE groups SET owner_contact_id = ? WHERE owner_contact_id = ?", targetId, sourceId],
