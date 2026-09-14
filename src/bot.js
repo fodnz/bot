@@ -25,7 +25,7 @@ const client = new WaClient(
     logger
 );
 
-registerDatabaseEvents(client, repository);
+const disableDatabaseEvents = registerDatabaseEvents(client, repository);
 
 client.on("auth_qr", async () => {
     await client.auth.requestPairingCode(botPn, true, pairCode);
@@ -48,5 +48,21 @@ client.on("connection", ({ status, reason }) => {
 
 await client.connect();
 
-process.once("SIGINT", () => database.close());
-process.once("SIGTERM", () => database.close());
+let shuttingDown = false;
+
+async function shutdown(signal) {
+    if (shuttingDown) return;
+    shuttingDown = true;
+    disableDatabaseEvents();
+
+    try {
+        await client.disconnect();
+    } catch (error) {
+        console.error(`client shutdown failed after ${signal}:`, error);
+    } finally {
+        if (database.open) database.close();
+    }
+}
+
+process.once("SIGINT", () => { void shutdown("SIGINT"); });
+process.once("SIGTERM", () => { void shutdown("SIGTERM"); });
